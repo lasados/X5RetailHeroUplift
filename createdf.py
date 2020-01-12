@@ -49,20 +49,22 @@ def clear_lists(lists_of_feature):
 
 
 
-def inizialize_row(id_of_row, csv_row, last_row = None):
+def inizialize_row(id_of_row, csv_row, start_row=None, last_row = None):
     '''
     Assign values to current and previos row.
     Takes id_of_row and row to update current row and previos row.
     Returns current row and previos row.
     
     '''
+    if start_row==None:
+        start_row=1
     # При первом запуске last_row = None
-    if id_of_row==1:
+    if id_of_row==start_row:
         prev_row = csv_row
         curr_row = csv_row
     
     # После этого last_row = previos_row
-    if id_of_row > 1:
+    if id_of_row > start_row:
         prev_row = last_row
         curr_row = csv_row
     return curr_row, prev_row
@@ -185,13 +187,19 @@ def summarize_last_visit(previos_row, prev_date, list_of_last_visit):
 
 
 
-def create_data_for_df(nmax_rows, filename='Data/purchases.csv'):    
+def create_data_for_df(nmax_rows=None, nmax_users=None, start_row=None,
+                       step_rows = 10_000, filename='Data/purchases.csv'):    
     '''
     This is the key function in purcing csv file.
     Running rows in given csv file and create list with final features.
     Returns lists with info about each person.
     '''
+    
+    if start_row==None:
+        start_row=1
+    
     id_of_row = 0
+    
     purchase=[]
     n_of_user = 0
     #filename = 'Data/purchases.csv'
@@ -200,8 +208,14 @@ def create_data_for_df(nmax_rows, filename='Data/purchases.csv'):
         if id_of_row==0:
             id_of_row = 1
             continue
+        
+        if id_of_row < start_row:
+            id_of_row+=1
+            continue
 
-        if id_of_row==1:
+            
+        
+        if id_of_row==start_row:
                 # инициализируем количество визитов в магазин единицей
                 n_visits=1
 
@@ -237,7 +251,7 @@ def create_data_for_df(nmax_rows, filename='Data/purchases.csv'):
 
 
         # Инициализируем текущую строку и предыдущую
-        current_row, previos_row = inizialize_row(id_of_row, row, last_row=current_row)
+        current_row, previos_row = inizialize_row(id_of_row, row,start_row, last_row=current_row)
 
         # Инициализируем текущие и прошлые значения id_клиента, транзакции, даты
         curr_client_id, prev_client_id = current_row[0], previos_row[0]
@@ -377,15 +391,24 @@ def create_data_for_df(nmax_rows, filename='Data/purchases.csv'):
 
             n_visits = 1
             n_red_visits = 0
+            
+            n_of_user += 1
 
             list_delay_days=[]
             list_client_day=[]
             
 
         id_of_row += 1
-        if id_of_row==nmax_rows:
-            break
         
+        if nmax_users!=None:
+            if n_of_user>=nmax_users:
+                break
+                
+        if nmax_rows!=None:
+            if id_of_row-start_row>=nmax_rows:
+                break
+        
+   
     return purchase
 
 
@@ -440,11 +463,14 @@ def generate_column_names(names_pure_feature=None, names_gen_feature=None, name_
     return columns
 
 
-def create_dataframe(nmax_rows, filename='Data/purchases.csv'):
+def create_dataframe(nmax_rows=None, nmax_users=None, start_row=None,
+                     filename='Data/purchases.csv'):
     '''
-    Creates DataFrame from csv file with parcing maximum of nmax_rows.
+    Creates DataFrame from csv file with parcing maximum of nmax_rows, or nmax_users.
+    Starts from start_row.
+    
     '''
-    data = create_data_for_df(nmax_rows, filename)
+    data = create_data_for_df(nmax_rows, nmax_users, start_row, filename)
     columns = generate_column_names()
     
     dataframe=pd.DataFrame(data=data, columns=columns)
