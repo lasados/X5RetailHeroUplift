@@ -48,7 +48,6 @@ def create_feature(list_func,lists_of_feature):
 
 
 
-
 def inizialize_row(id_of_row, csv_row, start_row=None, last_row = None):
     '''
     Assign values to current and previos row.
@@ -142,9 +141,6 @@ def create_feat_from_days(client_visit_days):
 
             list_delay_days.append(delay)
 
-
-
-
     return list_delay_days, weekday_list
 
 
@@ -217,7 +213,7 @@ def get_start_row(start_user, filename='Data/purchases.csv'):
 
 
 def create_data_for_df(nmax_rows=None, nmax_users=None, start_row=None, start_user=None,
-                       step_rows = 10_000, filename='Data/purchases.csv'):    
+                       filename='Data/purchases.csv'):    
     '''
     This is the kernal function (main) in purcing csv file.
     Running rows in given csv file and create list with final features.
@@ -233,7 +229,8 @@ def create_data_for_df(nmax_rows=None, nmax_users=None, start_row=None, start_us
         start_row = get_start_row(start_user)
     
     id_of_row = 0
-    
+
+    # Создаем ключевой лист для return
     purchase=[]
     
     n_of_user = 0
@@ -364,8 +361,6 @@ def create_data_for_df(nmax_rows=None, nmax_users=None, start_row=None, start_us
             # Это другой клиент! 
             # Подводим итоги прошлого клиента!
 
-
-
             # Подводим итоги прошлого визита!
             list_of_last_visit= [list_client_day,
                                  list_regular_points_received,
@@ -386,10 +381,7 @@ def create_data_for_df(nmax_rows=None, nmax_users=None, start_row=None, start_us
             sum_product_unique = list_of_last_visit[-2]
             sum_product_quantity = list_of_last_visit[-1]
 
-
-
             # Добавляем информацию о частоте посещения магазина
-
             list_delay_days, week_day_list = create_feat_from_days(list_client_day)
 
             # Собираем список из списков фичей - 11 штук !
@@ -399,7 +391,6 @@ def create_data_for_df(nmax_rows=None, nmax_users=None, start_row=None, start_us
                                 list_trn_sum_from_red,
                                 list_price_from_iss
                                ]
-
 
             # Собираем итоговые признаки клиента
             # Инициалзируем лист который описывает клиента
@@ -443,7 +434,8 @@ def create_data_for_df(nmax_rows=None, nmax_users=None, start_row=None, start_us
 
 
         id_of_row += 1
-        
+
+        # Критерии остановки
         if nmax_users!=None:
             if n_of_user>=nmax_users:
                 break
@@ -464,6 +456,8 @@ def generate_column_names(names_pure_feature=None, names_gen_feature=None, name_
     Takes names of pure features, names of generated features and names of functions.
     Return list of strings with column names.
     '''
+
+    # Дефолтные имена "чистых" признаков
     if names_pure_feature==None:
         names_pure_feature = ['client_id',
                               'n_visits',
@@ -475,7 +469,8 @@ def generate_column_names(names_pure_feature=None, names_gen_feature=None, name_
                               'weekday_5',
                               'weekday_6',
                               'weekday_7',]
-        
+
+    # Дефолтные имена сгенерированных признаков   
     if names_gen_feature==None:
         names_gen_feature = ['delay_days',       
                             'regular_points_received',
@@ -492,14 +487,17 @@ def generate_column_names(names_pure_feature=None, names_gen_feature=None, name_
                             'price_from_iss'
                            ]
         
+    # Дефолтные имена функций    
     if name_of_func==None:
         name_of_func = ['max', 'min', 'mean', 'median', 'std']
     
     
-
+    # Даем имена колонкам
     columns=[]
     for name in names_pure_feature:
         columns.append(name)
+
+    # Склеиваем имена   
     for feature in names_gen_feature:
             for func in name_of_func:
                 columns.append(func + '_' + feature)
@@ -514,9 +512,11 @@ def create_dataframe(nmax_rows=None, nmax_users=None, start_row=None, start_user
     Starts from start_row or start_user.
     
     '''
+    # Вычисляем ключевой лист
     data = create_data_for_df(nmax_rows, nmax_users, start_row, start_user, filename)
+    # Даем имена колонкам
     columns = generate_column_names()
-    
+    # Собираем фрейм
     dataframe=pd.DataFrame(data=data, columns=columns)
     return dataframe
 
