@@ -37,14 +37,14 @@ def create_feature(list_func,lists_of_feature):
     '''
     result_list=[]
     for feature in lists_of_feature:
+        # Если пусто заполняем нулем
+        if feature==[]:
+            feature=[0]
+            
         for func in list_func:
             result_list.append(func(feature))
+            
     return result_list
-
-def clear_lists(lists_of_feature):
-    '''Delete lists '''
-    for feature_list in lists_of_feature:
-        feature_list=[]
 
 
 
@@ -185,24 +185,58 @@ def summarize_last_visit(previos_row, prev_date, list_of_last_visit):
     return list_of_last_visit
 
 
+# Ищем стартовую строку для start_user
+def get_start_row(start_user, filename='Data/purchases.csv'):
+    '''
+    Finds number of row which contains info about start_user.
+    start_user = {1,2,3,...}
+    Return number of row in csv file (starts from 0)
+    '''
+    if start_user!=None:
+        if start_user>0: 
+            n_of_row = 0
+            n_of_user = 0
+            for row in generator_of_rows(filename):
+                if n_of_row==0:
+                    current_user = row[0]
+                    previos_user = row[0]
+
+                current_user = row[0]
+                if current_user==previos_user:
+                    n_of_row+=1
+                    continue
+                else:
+                    previos_user=current_user
+                    n_of_user+=1
+                    n_of_row+=1
+                    if n_of_user==start_user:
+                        break
+    return n_of_row-1
 
 
-def create_data_for_df(nmax_rows=None, nmax_users=None, start_row=None,
+
+
+def create_data_for_df(nmax_rows=None, nmax_users=None, start_row=None, start_user=None,
                        step_rows = 10_000, filename='Data/purchases.csv'):    
     '''
-    This is the key function in purcing csv file.
+    This is the kernal function (main) in purcing csv file.
     Running rows in given csv file and create list with final features.
     Returns lists with info about each person.
     '''
     
+    # Если не указана начальная строка
     if start_row==None:
         start_row=1
+    
+    # Если указан номер начального пользователя
+    if start_user!=None:
+        start_row = get_start_row(start_user)
     
     id_of_row = 0
     
     purchase=[]
+    
     n_of_user = 0
-    #filename = 'Data/purchases.csv'
     for row in generator_of_rows(filename):
         # пропускаем header
         if id_of_row==0:
@@ -211,9 +245,7 @@ def create_data_for_df(nmax_rows=None, nmax_users=None, start_row=None,
         
         if id_of_row < start_row:
             id_of_row+=1
-            continue
-
-            
+            continue       
         
         if id_of_row==start_row:
                 # инициализируем количество визитов в магазин единицей
@@ -386,17 +418,29 @@ def create_data_for_df(nmax_rows=None, nmax_users=None, start_row=None,
 
 
             # Опустошаем использованные списки
-            for item in lists_of_feature:
-                item=[]
-
+            list_client_day = []
+            list_regular_points_received = []
+            list_express_points_received = []
+            list_regular_points_spent = []
+            list_express_points_spent = []
+            list_purchase_sum = []
+            list_sum_product_quantity = []
+            list_sum_product_unique = []
+            sum_product_unique = 0
+            sum_product_quantity = 0
+            
+            list_trn_sum_from_iss = []
+            list_trn_sum_from_red = []
+            list_price_from_iss = []
+            list_delay_days=[]
+            list_client_day=[]
+            
+            # Обновляем индикаторы
             n_visits = 1
             n_red_visits = 0
             
             n_of_user += 1
 
-            list_delay_days=[]
-            list_client_day=[]
-            
 
         id_of_row += 1
         
@@ -463,14 +507,14 @@ def generate_column_names(names_pure_feature=None, names_gen_feature=None, name_
     return columns
 
 
-def create_dataframe(nmax_rows=None, nmax_users=None, start_row=None,
+def create_dataframe(nmax_rows=None, nmax_users=None, start_row=None, start_user=None, 
                      filename='Data/purchases.csv'):
     '''
     Creates DataFrame from csv file with parcing maximum of nmax_rows, or nmax_users.
-    Starts from start_row.
+    Starts from start_row or start_user.
     
     '''
-    data = create_data_for_df(nmax_rows, nmax_users, start_row, filename)
+    data = create_data_for_df(nmax_rows, nmax_users, start_row, start_user, filename)
     columns = generate_column_names()
     
     dataframe=pd.DataFrame(data=data, columns=columns)
