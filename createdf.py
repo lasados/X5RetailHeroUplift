@@ -10,11 +10,17 @@ from datetime import datetime
 # Создаем генератор строк
 def generator_of_rows(filename):
     '''
-    Generator of rows in csv file
-    Returns row per call.
+    Generator of rows in csv file.
+    
+    Args:
+        filename(str): name of csv file for parcing
+    Return:
+        generator like range()
+    Example:
+        list_of_rows = [row for row in generator_of_rows(filename)]
     
     '''
-    # Открываем файл
+    # Open file
     with open(filename, "r") as csvfile:
         datareader = csv.reader(csvfile)
         for row in datareader:
@@ -34,13 +40,27 @@ def create_feature(list_func,lists_of_feature):
     Takes list of functions and apply them to lists of given features.
     Returns list with new generated features.
     
+    Args:
+        list_func(1d_array): list of functions for creating features
+        lists_of_feature : lists with features
+        
+    Return:
+        result_list : list with lists of created features
+        
+    Example: 
+        >>>list_func = [np.max, np.min]
+        >>>lists_of_feature = [[1,2,3],[4,5,6]]
+        >>>create_feature(list_func,lists_of_feature)
+        > [[3,1],[6,4]] 
+    
     '''
     result_list=[]
+    # iter by features
     for feature in lists_of_feature:
-        # Если пусто заполняем нулем
+        # fill if empty
         if feature==[]:
             feature=[0]
-            
+        # iter by functions   
         for func in list_func:
             result_list.append(func(feature))
             
@@ -54,15 +74,24 @@ def inizialize_row(id_of_row, csv_row, start_row=None, last_row = None):
     Takes id_of_row and row to update current row and previos row.
     Returns current row and previos row.
     
+    Args:
+        id_of_row(int): current index of iterations by rows 
+        csv_row(1d_list): row in csv file with index=id_of_row
+        last_row(int): row of previos itearation
+        start_row(int): where parcing file start from 
+        
+    Return:
+        curr_row(1d_list): row of current itearation
+        prev_row(1d_list): row of previos itearation
     '''
     if start_row==None:
         start_row=1
-    # При первом запуске last_row = None
+    # При первом запуске last_row = None - значение предыдущей строки неопределено
     if id_of_row==start_row:
         prev_row = csv_row
         curr_row = csv_row
     
-    # После этого last_row = previos_row
+    # При последующих запусках last_row = previos_row
     if id_of_row > start_row:
         prev_row = last_row
         curr_row = csv_row
@@ -80,6 +109,9 @@ def uptate_curr_check_feature(row, sum_product_unique,
     Takes arguments from last iteration and update it due to info in row.
     Returns updated features.
     
+    Args:
+        row(1d_list): row of current iterations to sum
+        *args: features of current visit 
     '''
     #число уникальных товаров в чеке +1
     sum_product_unique += 1
@@ -120,6 +152,9 @@ def create_feat_from_days(client_visit_days):
     Uses list with dates of visits.
     Returns list with delays between visits in days.
     Also returns number of visits grouped by weekday. 
+    
+    Args:
+        client_visit_days(list of str): visit dates of current client in str format
 
     '''
     weekday_list = [0,0,0,0,0,0,0]
@@ -149,17 +184,22 @@ def summarize_last_visit(previos_row, prev_date, list_of_last_visit):
     '''
     Returns updated list with info about last visit.
     Takes previos row, previos date and list_of_last_visit 
-    where:
-    0 list_client_day,\
-    1 list_regular_points_received,\
-    2 list_express_points_received,\
-    3 list_regular_points_spent,\
-    4 list_express_points_spent,\
-    5 list_purchase_sum,\
-    6 list_sum_product_quantity,\
-    7 list_sum_product_unique,\
-    8 sum_product_unique,\
-    9 sum_product_quantity = list_of_last_visit
+    
+    Args:
+        previos_row(list): row of previos iteration
+        prev_date(str) : date of previos visit
+        list_of_last_visit: lists with features of previos visit
+            where:
+            0 list_client_day,\
+            1 list_regular_points_received,\
+            2 list_express_points_received,\
+            3 list_regular_points_spent,\
+            4 list_express_points_spent,\
+            5 list_purchase_sum,\
+            6 list_sum_product_quantity,\
+            7 list_sum_product_unique,\
+            8 sum_product_unique,\
+            9 sum_product_quantity = list_of_last_visit
     
     '''
     # Подводим итоги прошлого визита!
@@ -184,9 +224,12 @@ def summarize_last_visit(previos_row, prev_date, list_of_last_visit):
 # Ищем стартовую строку для start_user
 def get_start_row(start_user, filename='Data/purchases.csv'):
     '''
-    Finds number of row which contains info about start_user.
-    start_user = {1,2,3,...}
-    Return number of row in csv file (starts from 0)
+    Finds index of row which contains info about start_user.
+    Returns start row in csv file (starts from 0)
+    
+    Args:
+        start_user(int): index of user where start parcing file from
+    
     '''
     if start_user!=None:
         if start_user>0: 
@@ -218,6 +261,12 @@ def create_data_for_df(nmax_rows=None, nmax_users=None, start_row=None, start_us
     This is the kernal function (main) in purcing csv file.
     Running rows in given csv file and create list with final features.
     Returns lists with info about each person.
+    
+    Args:
+        nmax_rows: max number of rows to read
+        nmax_users: max number of users to read
+        start_row: index of row where to start 
+        start_user: index of user where to start 
     '''
     
     # Если не указана начальная строка
@@ -455,6 +504,12 @@ def generate_column_names(names_pure_feature=None, names_gen_feature=None, name_
     Generate names of columns for DataFrame.
     Takes names of pure features, names of generated features and names of functions.
     Return list of strings with column names.
+    
+    Args:
+        names_pure_feature: names of features which cant be used in mean,max,std functions
+        names_gen_feature: names of features which will used in generating statistic features
+        name_of_func: names of statistic functions
+    
     '''
 
     # Дефолтные имена "чистых" признаков
@@ -491,7 +546,6 @@ def generate_column_names(names_pure_feature=None, names_gen_feature=None, name_
     if name_of_func==None:
         name_of_func = ['max', 'min', 'mean', 'median', 'std']
     
-    
     # Даем имена колонкам
     columns=[]
     for name in names_pure_feature:
@@ -511,6 +565,12 @@ def create_dataframe(nmax_rows=None, nmax_users=None, start_row=None, start_user
     Creates DataFrame from csv file with parcing maximum of nmax_rows, or nmax_users.
     Starts from start_row or start_user.
     
+    Args:
+        nmax_rows: max number of rows to read
+        nmax_users: max number of users to read
+        start_row: index of row where to start 
+        start_user: index of user where to start 
+    
     '''
     # Вычисляем ключевой лист
     data = create_data_for_df(nmax_rows, nmax_users, start_row, start_user, filename)
@@ -518,6 +578,7 @@ def create_dataframe(nmax_rows=None, nmax_users=None, start_row=None, start_user
     columns = generate_column_names()
     # Собираем фрейм
     dataframe=pd.DataFrame(data=data, columns=columns)
+    
     return dataframe
 
 
